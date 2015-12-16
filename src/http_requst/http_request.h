@@ -23,7 +23,6 @@
 
 #include "openlib/nginx/libngx.h"
 #include "openlib/http_parser/http_parser.h"
-#include <string.h>
 
 namespace http
 {
@@ -33,20 +32,20 @@ namespace http
 	* 
 	* @brief	
 	*	
-	*		¸ßÐÔÄÜ°æµÄhttp´ò°ü½âÎö¿â
-	*		Ö÷ÒªÌåÏÖÔÚÄÚ´æµÄÊ¹ÓÃÉÏ
+	*		é«˜æ€§èƒ½ç‰ˆçš„httpæ‰“åŒ…,è§£æžåº“
+	*		ä¸»è¦ä½“çŽ°åœ¨å†…å­˜çš„ä½¿ç”¨ä¸Š
 	*
 	* detail...
-	*	Ö÷ÒªÓÃÍ¾ÓÐÒÔÏÂ¼¸µã
-	*	1.ÅäºÏÍøÂç¿ò¼Ü½ÓÊÕÊý¾Ý£¬ÎªhttpÊý¾ÝÁ÷Ìá¹©ÄÚ´æ·ÖÅäºÍ½âÎö¹¦ÄÜ
-	*	2.ÅäºÏÍøÂç¿ò¼Ü·¢ËÍÊý¾Ý£¬ÎªhttpÊý¾ÝÌá¹©ÄÚ´æ·ÖÅäºÍ´ò°ü¹¦ÄÜ
+	*	ä¸»è¦ç”¨é€”æœ‰ä»¥ä¸‹å‡ ç‚¹
+	*	1.é…åˆç½‘ç»œæ¡†æž¶æŽ¥æ”¶æ•°æ®ï¼Œä¸ºhttpæ•°æ®æµæä¾›å†…å­˜åˆ†é…å’Œè§£æžåŠŸèƒ½
+	*	2.é…åˆç½‘ç»œæ¡†æž¶å‘é€æ•°æ®ï¼Œä¸ºhttpæ•°æ®æä¾›å†…å­˜åˆ†é…å’Œæ‰“åŒ…åŠŸèƒ½
 	*
 	* @author	 mklong
 	* @date	2014/11/12
 	* 
 	* @see		
 	* 
-	* @par ±¸×¢£º
+	* @par å¤‡æ³¨ï¼š
 	* 
 	*/
 	struct  http_request
@@ -59,13 +58,13 @@ namespace http
 		};
 
 		enum PARSE_STATE{
-			START = 0,				//ÉÐÎ´½âÎö¹ýÍ·²¿
-			HEADER_FIELD,			//Í·²¿½âÎöÖÐ
-			HEADER_VALUE,			//Í·²¿½âÎöÖÐ
-			HEADER_DONE,			//½âÎöÍ·²¿£¬Ö÷Òª·µ»Ø³¤¶È
-			BODY,						//µÈ´ýbody²¿·ÖÊý¾Ý
-			DONE,						//Êý¾ÝÍêÕû
-			ERROR						//½âÎö³ö´í
+			START = 0,				//å°šæœªè§£æžè¿‡å¤´éƒ¨
+			HEADER_FIELD,			//å¤´éƒ¨è§£æžä¸­
+			HEADER_VALUE,			//å¤´éƒ¨è§£æžä¸­
+			HEADER_DONE,			//è§£æžå¤´éƒ¨ï¼Œä¸»è¦è¿”å›žé•¿åº¦
+			BODY,						//ç­‰å¾…bodyéƒ¨åˆ†æ•°æ®
+			DONE,						//æ•°æ®å®Œæ•´
+			ERROR						//è§£æžå‡ºé”™
 		};
 
 		enum PARSER_TYPE {
@@ -76,9 +75,9 @@ namespace http
 
 		enum{
 			ALLOC_STR_SIZE = 64,
-			ALLOC_PAGESIZE = 4096,  
+			ALLOC_PAGESIZE = 4096,
 			MAX_HEADER_SIZE = 4096,
-			MAX_BODY_SIZE = 1024*1024,
+			MAX_BODY_SIZE = 10*1024*1024,
 
 		};
 
@@ -88,11 +87,11 @@ namespace http
 		/** 
 		* @brief 	*create_http_request
 		* 
-		* 	·ÖÅäÄÚ´æ³Ø£¬²¢ÔÚÄÚ´æ³ØÖÐ·ÖÅä´Ë¶ÔÏó£¬³õÊ¼»¯Ïà¹Ø²ÎÊý
+		* 	åˆ†é…å†…å­˜æ± ï¼Œå¹¶åœ¨å†…å­˜æ± ä¸­åˆ†é…æ­¤å¯¹è±¡ï¼Œåˆå§‹åŒ–ç›¸å…³å‚æ•°
 		* 
 		* @author	mklong
 		* @date	2014/11/12
-		* @return	static http_request £¬return NULL if failed
+		* @return	static http_request ï¼Œreturn NULL if failed
 		* @see		
 		*/
 		static http_request *create_http_request();
@@ -101,7 +100,7 @@ namespace http
 		/** 
 		* @brief 	finalize_http_request
 		* 
-		* 	ÊÍ·ÅÄÚ´æ³Ø£¬
+		* 	é‡Šæ”¾å†…å­˜æ± ï¼Œ
 
 		* 
 		* @author	mklong
@@ -116,7 +115,7 @@ namespace http
 		/** 
 		* @brief 	init_request_parser
 		* 
-		* 	Èç¹ûrequestÐèÒª½âÎö£¬ÐèÒª³õÊ¼»¯½âÎöÆ÷
+		* 	å¦‚æžœrequestéœ€è¦è§£æžï¼Œéœ€è¦åˆå§‹åŒ–è§£æžå™¨
 		* 
 		* @author	mklong
 		* @date	2014/11/18
@@ -126,13 +125,13 @@ namespace http
 		* @see		
 		*/
 		int init_request_parser(PARSER_TYPE type = HTTP_BOTH,
-			size_t default_recv_buf = ALLOC_PAGESIZE);
+								size_t default_recv_buf = ALLOC_PAGESIZE);
 
 
 		/** 
 		* @brief 	run_http_parser
 		* 
-		* 	µ÷ÓÃhttp½âÎöº¯Êý
+		* 	è°ƒç”¨httpè§£æžå‡½æ•°
 		* 
 		* @author	mklong
 		* @date	2014/11/12
@@ -148,7 +147,7 @@ namespace http
 		/** 
 		* @brief 	* parser_errno
 		* 
-		* 	»ñÈ¡http½âÎö¹ý³ÌÖÐµÄ¾ßÌå´íÎóÔ­Òò
+		* 	èŽ·å–httpè§£æžè¿‡ç¨‹ä¸­çš„å…·ä½“é”™è¯¯åŽŸå› 
 		* 
 		* @author	mklong
 		* @date	2014/11/12
@@ -161,8 +160,8 @@ namespace http
 		/** 
 		* @brief 	alloc_recv_buf
 		* 
-		* 	½ÓÊÕÊý¾ÝÌá¹©ÄÚ´æ·ÖÅä²Ù×÷£¬´ÓÄÚ´æ³Ø·ÖÅä
-		* Ã¿´Îµ÷ÓÃ£¬ÀÏµÄbuf»á¹ÒÔØµ½recv_chainÉÏ
+		* 	æŽ¥æ”¶æ•°æ®æä¾›å†…å­˜åˆ†é…æ“ä½œï¼Œä»Žå†…å­˜æ± åˆ†é…
+		* æ¯æ¬¡è°ƒç”¨ï¼Œè€çš„bufä¼šæŒ‚è½½åˆ°recv_chainä¸Š
 		*
 		* @author	mklong
 		* @date	2014/11/12
@@ -177,7 +176,7 @@ namespace http
 		/** 
 		* @brief 	*get_in_header
 		* 
-		* 	»ñÈ¡ÇëÇóµÄÍ·
+		* 	èŽ·å–è¯·æ±‚çš„å¤´
 		* 
 		* @author	mklong
 		* @date	2014/11/17
@@ -192,35 +191,35 @@ namespace http
 		/** 
 		* @brief 	*get_method
 		* 
-		* 	»ñÈ¡http method
+		* 	èŽ·å–http method
 		* 
 		* @author	mklong
 		* @date	2014/11/20
 		* @return	const char 
 		* @see		
 		*/
-		const char *get_method();
+		const char *get_method() const;
 
 
 		/** 
 		* @brief 	get_http_version
 		* 
-		* 	»ñÈ¡http°æ±¾ºÅ
+		* 	èŽ·å–httpç‰ˆæœ¬å·
 		* 
 		* @author	mklong
 		* @date	2014/11/20
 		* @return	size_t 
 		* @see		
 		*/
-		size_t get_http_version();
+		size_t get_http_version() const;
 
-
+		int copy_out_first_line_from_in();
 
 		/** 
 		* @brief 	set_out_first_line
 		* 
-		* 	×÷Îªout requestÊ±µÄreqeust line
-		* »òÕßresponseÊ±µÄstatus line
+		* 	ä½œä¸ºout requestæ—¶çš„reqeust line
+		* æˆ–è€…responseæ—¶çš„status line
 		* 
 		* @author	mklong
 		* @date	2014/11/21
@@ -235,7 +234,7 @@ namespace http
 		/** 
 		* @brief 	add_out_header
 		* 
-		* 	ÉèÖÃÏìÓ¦Í·
+		* 	è®¾ç½®å“åº”å¤´
 		* 
 		* @author	mklong
 		* @date	2014/11/17
@@ -246,14 +245,16 @@ namespace http
 		*/
 		int add_out_header(const char * field ,const char * value);
 		int add_out_header( const char * field , size_t field_len,
-			const char * value , size_t value_len);
+							const char * value , size_t value_len);
+
+		int copy_out_headers_from_in();
 
 		/** 
 		* @brief 	add_out_body
 		* 
-		* 	ÉèÖÃbody£¬@cleanÎª@bodyµÄÊÍ·Åº¯Êý
-		*	Èç¹ûÎ´ÉèÖÃÄÚ²¿»á¿½±´@body
-		*  ÉèÖÃºó£¬ÄÚ²¿»á½Ó¹Ü@bodyµÄÊÍ·Å£¬ÊÍ·Åº¯ÊýÎª@clean
+		* 	è®¾ç½®bodyï¼Œ@cleanä¸º@bodyçš„é‡Šæ”¾å‡½æ•°
+		*	å¦‚æžœæœªè®¾ç½®å†…éƒ¨ä¼šæ‹·è´@body
+		*  è®¾ç½®åŽï¼Œå†…éƒ¨ä¼šæŽ¥ç®¡@bodyçš„é‡Šæ”¾ï¼Œé‡Šæ”¾å‡½æ•°ä¸º@clean
 		*
 		* @author	mklong
 		* @date	2014/11/21
@@ -265,10 +266,12 @@ namespace http
 		*/
 		int add_out_body(const char * body,size_t length,cleanup_pt clean = NULL);
 
+		int copy_out_body_from_in();
+
 		/** 
 		* @brief 	package_request
 		* 
-		* 	¸ù¾ÝÉèÖÃµÄoutÐÅÏ¢´ò°ühttpÏìÓ¦µ½send_chainÖÐ
+		* 	æ ¹æ®è®¾ç½®çš„outä¿¡æ¯æ‰“åŒ…httpå“åº”åˆ°send_chainä¸­
 		* 
 		* @author	mklong
 		* @date	2014/11/17
@@ -277,11 +280,12 @@ namespace http
 		*/
 		int package_request();
 
+		int copy_out_request_from_in();
 
 		/** 
 		* @brief 	set_max_header_size
 		* 
-		* 	ÉèÖÃhttp½âÎö×î´óµÄÍ·²¿£¬Èç¹ûÍ·²¿³¬¹ý·§ÖµÔòÊ§°Ü
+		* 	è®¾ç½®httpè§£æžæœ€å¤§çš„å¤´éƒ¨ï¼Œå¦‚æžœå¤´éƒ¨è¶…è¿‡é˜€å€¼åˆ™å¤±è´¥
 		* 
 		* @author	mklong
 		* @date	2014/11/18
@@ -295,7 +299,7 @@ namespace http
 		/** 
 		* @brief 	set_max_body_size
 		* 
-		* 	ÉèÖÃhttp½âÎö×î´óµÄbody£¬Èç¹û³¬¹ý·§ÖµÔòÊ§°Ü
+		* 	è®¾ç½®httpè§£æžæœ€å¤§çš„bodyï¼Œå¦‚æžœè¶…è¿‡é˜€å€¼åˆ™å¤±è´¥
 		* 
 		* @author	mklong
 		* @date	2014/11/18
@@ -303,8 +307,9 @@ namespace http
 		* @param	size_t size	- [in] 
 		* @see		
 		*/
-		void set_max_body_size(size_t size); 
+		void set_max_body_size(size_t size);
 
+		void reset_chain_buf();
 	private:
 		// http parser callback
 		//event callback
@@ -316,43 +321,47 @@ namespace http
 		static int http_url_cb (http_parser*, const char *at, size_t length);
 		static int http_status_cb (http_parser*, const char *at, size_t length);
 		static int http_header_field_cb (http_parser*, const char *at, size_t length);
-		static int http_header_value_cb (http_parser*, const char *at, size_t length); 
+		static int http_header_value_cb (http_parser*, const char *at, size_t length);
 		static int http_body_cb (http_parser*, const char *at, size_t length);
 
 		int set_parse_str(ngx_str_t * str, u_char* data, size_t length);
 		int ngx_str_alloc_cpy(ngx_str_t * str,const u_char * data , size_t len);
-
+		void reset_chain_buf_pos(ngx_chain_t * chain);
 	public:
-		//ÄÚ´æ³Ø
+		//å†…å­˜æ± 
 		ngx_pool_t *pool;
 
 		//////////////////////////////////////////////////////////////////////////
 		// request in variable
 		//////////////////////////////////////////////////////////////////////////
 
+		//request first line
+		ngx_str_t in_first_line;
+
 		//response only
 		ngx_str_t status;
 
 		//request only
 		ngx_str_t uri;
+		ngx_str_t args;
 
 		//
 		int content_length;
 
-		//ngx_table_elt_t ÁÙÊ±Ö¸Õë
+		//ngx_table_elt_t ä¸´æ—¶æŒ‡é’ˆ
 		ngx_table_elt_t * header_last;
 		ngx_list_t *headers_in;
 
 
-		//½ÓÊÕÁÙÊ±»º³åÇø,³õÊ¼»¯Ê±·ÖÅäÒ³´óÐ¡ÄÚ´æ£¬bufÂúµÄÇé¿öÏÂ£¬
-		//µ÷ÓÃalloc_recv_buf»á°Ñbuf¹ÒÔØµ½recv_chainÉÏ£¬²¢ÖØÐÂ·ÖÅä
-		ngx_buf_t *buf;	
+		//æŽ¥æ”¶ä¸´æ—¶ç¼“å†²åŒº,åˆå§‹åŒ–æ—¶åˆ†é…é¡µå¤§å°å†…å­˜ï¼Œbufæ»¡çš„æƒ…å†µä¸‹ï¼Œ
+		//è°ƒç”¨alloc_recv_bufä¼šæŠŠbufæŒ‚è½½åˆ°recv_chainä¸Šï¼Œå¹¶é‡æ–°åˆ†é…
+		ngx_buf_t *buf;
 
-		//bodyÊý¾Ý£¬ÎÞÐè·ÖÅäÄÚ´æ£¬Ö±½ÓÖ¸ÏòbufÎ»ÖÃ
-		ngx_chain_t body;	
+		//bodyæ•°æ®ï¼Œæ— éœ€åˆ†é…å†…å­˜ï¼Œç›´æŽ¥æŒ‡å‘bufä½ç½®
+		ngx_chain_t body;
 
-		//½ÓÊÕÊý¾ÝÁ´
-		ngx_chain_t recv_chain; 
+		//æŽ¥æ”¶æ•°æ®é“¾
+		ngx_chain_t recv_chain;
 
 		//////////////////////////////////////////////////////////////////////////
 		// request out variable
@@ -363,28 +372,28 @@ namespace http
 
 		ngx_list_t *headers_out;
 
-		//·¢ËÍbodyÁ´
+		//å‘é€bodyé“¾
 		ngx_chain_t body_out_chain;
 
-		//·¢ËÍÁ´
-		ngx_chain_t send_chain;   
+		//å‘é€é“¾
+		ngx_chain_t send_chain;
 
 		//////////////////////////////////////////////////////////////////////////
 		//	others
 		//////////////////////////////////////////////////////////////////////////
 
-		//requestÁ´Ö¸Õë
+		//requesté“¾æŒ‡é’ˆ
 		http_request *next;
 
 		void *	reserved;
 
-		//ÉèÖÃ²ÎÊý½âÎö»Øµ÷
-		http_parser_settings setting; 
+		//è®¾ç½®å‚æ•°è§£æžå›žè°ƒ
+		http_parser_settings setting;
 
-		//http½âÎöÆ÷
-		http_parser parser;   
+		//httpè§£æžå™¨
+		http_parser parser;
 
-		//½âÎö×´Ì¬
+		//è§£æžçŠ¶æ€
 		short state;
 
 		//
@@ -421,15 +430,15 @@ namespace http
 
 	inline int http_request::set_parse_str( ngx_str_t * str, u_char* data, size_t length )
 	{
-		//parser »Øµ÷ÉèÖÃÄ³¸öÖµ¿ÉÄÜ·Ö¶à´Î£¬¿ÉÄÜ·ÖÔÚÁ½¸öbufferÖÐ£¬ÐèÒªÅÐ¶ÏÊÇ·ñÁ¬Ðø
+		//parser å›žè°ƒè®¾ç½®æŸä¸ªå€¼å¯èƒ½åˆ†å¤šæ¬¡ï¼Œå¯èƒ½åˆ†åœ¨ä¸¤ä¸ªbufferä¸­ï¼Œéœ€è¦åˆ¤æ–­æ˜¯å¦è¿žç»­
 		if (str->data != NULL ){
 
 			if (str->data + str->len == data){
 				str->len += length;
 				return 0;
 			}else{
-				//ÓÉÓÚÔ¤·ÖÅäÄÚ´æ×´Ì¬±ê¼ÇÄÑÒÔ¹ÜÀí£¬ÇÒ¿çbufferµÄÇé¿ö²»»áÁ¬Ðø¶à´Î£¬
-				//¹Ê²ÉÓÃÃ¿´Î·ÖÅä²ßÂÔ
+				//ç”±äºŽé¢„åˆ†é…å†…å­˜çŠ¶æ€æ ‡è®°éš¾ä»¥ç®¡ç†ï¼Œä¸”è·¨bufferçš„æƒ…å†µä¸ä¼šè¿žç»­å¤šæ¬¡ï¼Œ
+				//æ•…é‡‡ç”¨æ¯æ¬¡åˆ†é…ç­–ç•¥
 				u_char * buf = (u_char *)ngx_palloc(this->pool,str->len + length);
 				if (buf == NULL){
 					return -1;
@@ -450,7 +459,7 @@ namespace http
 		return 0;
 	}
 
-	inline const char * http_request::get_method()
+	inline const char * http_request::get_method() const
 	{
 		return http_method_str((http_method)this->parser.method);
 	}
@@ -460,7 +469,7 @@ namespace http
 		return http_errno_description(HTTP_PARSER_ERRNO(&parser));
 	}
 
-	inline size_t http_request::get_http_version()
+	inline size_t http_request::get_http_version() const
 	{
 		return this->parser.http_major *1000 +this->parser.http_minor;
 	}
@@ -480,6 +489,17 @@ namespace http
 		ngx_memcpy(str->data,data,len);
 		str->len = len;
 		return 0;
+	}
+
+	inline void http_request::reset_chain_buf_pos(ngx_chain_t * chain)
+	{
+		while(chain){
+			if (chain->buf){
+				chain->buf->pos = chain->buf->start;
+			}
+
+			chain = chain->next;
+		}
 	}
 
 }

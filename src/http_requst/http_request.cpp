@@ -6,7 +6,7 @@ namespace http
 
 	http_request * http_request::create_http_request()
 	{
-		//³õÊ¼»¯ÄÚ´æ³Ø
+		//åˆå§‹åŒ–å†…å­˜æ± 
 		ngx_pool_t *p = ngx_create_pool(ALLOC_PAGESIZE);
 		if (p == NULL){
 			return NULL;
@@ -31,8 +31,8 @@ namespace http
 		ngx_destroy_pool(r->pool);
 	}
 
-	int http_request::init_request_parser( PARSER_TYPE type /*= PARSER_TYPE::HTTP_REQUEST*/ 
-		,size_t default_recv_buf /*= ALLOC_PAGESIZE*/)
+	int http_request::init_request_parser( PARSER_TYPE type /*= PARSER_TYPE::HTTP_REQUEST*/
+			,size_t default_recv_buf /*= ALLOC_PAGESIZE*/)
 	{
 		//init parser
 		this->parser.data = this;
@@ -48,17 +48,17 @@ namespace http
 		this->setting.on_header_field = http_header_field_cb;
 		this->setting.on_header_value = http_header_value_cb;
 
-		//³õÊ¼»¯½ÓÊÕ»º³åÇø
+		//åˆå§‹åŒ–æŽ¥æ”¶ç¼“å†²åŒº
 		int ret = this->alloc_recv_buf(default_recv_buf);
 		if (ret){
 			return ret;
 		}
 
-		//³õÊ¼»¯bodyÁ´
+		//åˆå§‹åŒ–bodyé“¾
 		this->body.buf = ngx_calloc_buf(this->pool);
 		this->body.next = NULL;
 
-		//³õÊ¼»¯headers_in
+		//åˆå§‹åŒ–headers_in
 		this->headers_in = ngx_list_create(this->pool,8,sizeof(ngx_table_elt_t));
 		if (this->headers_in == NULL){
 			return -1;
@@ -72,18 +72,18 @@ namespace http
 		*done =false;
 		size_t nparsed = http_parser_execute(&this->parser, &this->setting,data,len);
 
-		//³ö´í
+		//å‡ºé”™
 		if (nparsed == 0)
 			return -1;
 
-		//Íê³É½âÎö£¬·µ»Ø³¤¶ÈnparsedÎª½âÎö¹ýµÄÊý¾Ý£¬²»Ò»¶¨µÈÓÚlen
+		//å®Œæˆè§£æžï¼Œè¿”å›žé•¿åº¦nparsedä¸ºè§£æžè¿‡çš„æ•°æ®ï¼Œä¸ä¸€å®šç­‰äºŽlen
 		if (this->state == DONE)
 			*done = true;
 		else if (nparsed != len){
-			//Ã»ÓÐ½âÎöÍê£¬³¤¶ÈÓÖ²»µÈ£¬ËµÃ÷ÖÐ¼ä½âÎö³ö´íÁË
+			//æ²¡æœ‰è§£æžå®Œï¼Œé•¿åº¦åˆä¸ç­‰ï¼Œè¯´æ˜Žä¸­é—´è§£æžå‡ºé”™äº†
 			return -1;
 		}
-		
+
 		return (int)nparsed;
 	}
 
@@ -100,7 +100,7 @@ namespace http
 			last_chain = last_chain->next;
 		}
 
-		//ÖØÖÃbuf
+		//é‡ç½®buf
 		buf = ngx_create_temp_buf(pool,size);
 		last_chain->buf = buf;
 		return 0;
@@ -108,7 +108,7 @@ namespace http
 
 	const ngx_str_t * http_request::get_in_header( const char * field,size_t len )
 	{
-		//±éÀúheaders_in,ºóÐø¿ÉÒÔ¿¼ÂÇ¼ÓÈëhashÀ´ÓÅ»¯
+		//éåŽ†headers_in,åŽç»­å¯ä»¥è€ƒè™‘åŠ å…¥hashæ¥ä¼˜åŒ–
 		ngx_list_part_t * part = &this->headers_in->part;
 		ngx_table_elt_t *data = (ngx_table_elt_t *)part->elts;
 		for (int i = 0 ;; i++) {
@@ -123,7 +123,7 @@ namespace http
 				i = 0;
 			}
 
-			//ÏÈÅÐ¶Ï³¤¶È£¬±ÜÃâ×Ö·û´®Æµ·±±È½Ï
+			//å…ˆåˆ¤æ–­é•¿åº¦ï¼Œé¿å…å­—ç¬¦ä¸²é¢‘ç¹æ¯”è¾ƒ
 			if (len == data[i].key.len && ngx_strncmp(field,data[i].key.data,len) == 0){
 				return &(data[i].value);
 			}
@@ -133,6 +133,15 @@ namespace http
 		return NULL;
 	}
 
+	int http_request::copy_out_first_line_from_in()
+	{
+		if (in_first_line.len != 0){
+			out_first_line = in_first_line;
+			return 0;
+		}
+
+		return -1;
+	}
 
 	int http_request::set_out_first_line( const char * line,size_t len )
 	{
@@ -145,7 +154,7 @@ namespace http
 	}
 
 	int http_request::add_out_header( const char * field , size_t field_len,
-		const char * value , size_t value_len)
+									  const char * value , size_t value_len)
 	{
 		if (headers_out == NULL){
 			headers_out = ngx_list_create(this->pool,8,sizeof(ngx_table_elt_t));
@@ -171,6 +180,37 @@ namespace http
 		}
 
 		return 0;
+	}
+
+	int http_request::copy_out_headers_from_in()
+	{
+		if (headers_out == NULL){
+			headers_out = ngx_list_create(this->pool,8,sizeof(ngx_table_elt_t));
+			if (headers_out == NULL){
+				return -1;
+			}
+		}
+
+		ngx_list_part_t * part = &this->headers_in->part;
+		ngx_table_elt_t *data = (ngx_table_elt_t *)part->elts;
+		ngx_table_elt_t * header = NULL;
+		for (int i = 0 ;; i++) {
+			if (i >= part->nelts) {
+				if (part->next == NULL) {
+					break;
+				}
+
+				part = part->next;
+
+				data = (ngx_table_elt_t *)part->elts;
+				i = 0;
+			}
+
+			header = (ngx_table_elt_t*)ngx_list_push(headers_out);
+
+			ngx_memzero(header,sizeof(ngx_table_elt_t));
+			*header = data[i];
+		}
 	}
 
 
@@ -212,9 +252,33 @@ namespace http
 		return 0;
 	}
 
+	int http_request::copy_out_body_from_in()
+	{
+		//
+		ngx_chain_t * out = &body_out_chain;
+		ngx_chain_t * in = &body;
+
+		while(in){
+			out->buf = in->buf;
+			out->buf->pos = out->buf->start;
+
+			in = in->next;
+			if (in){
+				out->next = ngx_alloc_chain_link(pool);
+				if (out->next == NULL)
+					return -1;
+
+				out = out->next;
+				out->next = NULL;
+				out->buf = NULL;
+			}
+		}
+		return 0;
+	}
+
 	int http_request::package_request()
 	{
-		//¼ÆËãÍ·²¿³¤¶È
+		//è®¡ç®—å¤´éƒ¨é•¿åº¦
 		int len = 0;
 		int crlf_len = sizeof(CRLF) - 1;
 		//first line
@@ -236,7 +300,7 @@ namespace http
 			}
 
 			len += data[i].key.len + sizeof(": ") - 1
-				+ data[i].value.len + crlf_len;
+				   + data[i].value.len + crlf_len;
 		}
 
 		//header end
@@ -283,6 +347,29 @@ namespace http
 		return 0;
 	}
 
+	int http_request::copy_out_request_from_in()
+	{
+		ngx_chain_t * out = &send_chain;
+		ngx_chain_t * in = &recv_chain;
+
+		while(in){
+			out->buf = in->buf;
+			out->buf->pos = out->buf->start;
+
+			in = in->next;
+			if (in){
+				out->next = ngx_alloc_chain_link(pool);
+				if (out->next == NULL)
+					return -1;
+
+				out = out->next;
+				out->next = NULL;
+				out->buf = NULL;
+			}
+		}
+		return 0;
+	}
+
 	int http_request::http_header_start_cb( http_parser* p)
 	{
 		http_request * r = (http_request *)p->data;
@@ -295,15 +382,96 @@ namespace http
 		http_request * r = (http_request *)p->data;
 		r->state = HEADER_DONE;
 
-		//´¦ÀíÍ·²¿²ÎÊýÐÅÏ¢
+		//å¤„ç†urlï¼Œåˆ‡åˆ†ä¸ºuri+args
+		u_char *args_pos = ngx_strlchr(r->uri.data,r->uri.data + r->uri.len,'?');
+		if (args_pos != NULL){
+			if (args_pos < r->uri.data + r->uri.len){
+				r->args.data = args_pos + 1;
+				r->args.len = r->uri.data + r->uri.len - args_pos -1;
+			}
+			r->uri.len = args_pos - r->uri.data;
+		}
 
-		//¼ì²éContent-Length
+		//æ£€æŸ¥Content-Length
 		const ngx_str_t * cl = r->get_in_header("Content-Length");
 		if (cl != NULL){
 			r->content_length = ngx_atoi(cl->data,cl->len);
-			if (r->content_length > 0 && 
+			if (r->content_length > 0 &&
 				r->content_length >= r->max_body_size){
-					return -1;
+				return -1;
+			}
+		}
+
+		//æ‹·è´è¯·æ±‚ç¬¬ä¸€è¡Œ
+		if (r->recv_chain.buf != NULL){
+			u_char *pos = ngx_strnstr(r->recv_chain.buf->start,CRLF,
+									  r->recv_chain.buf->last - r->recv_chain.buf->start);
+			if (pos == NULL){
+
+				//1)buf end \r,next buf start \n
+				//2ï¼‰\r\n in buf
+
+				ngx_chain_t * chain = &r->recv_chain;
+				ngx_chain_t * dst_chain = NULL;
+				size_t len = 0;
+
+				for (;chain != NULL &&chain->buf != NULL&&
+					  chain->buf->last != chain->buf->start
+						;chain = chain->next){
+
+					pos = ngx_strlchr(chain->buf->start,chain->buf->last + 1,CR);
+					if (pos != NULL ){
+
+						if (pos != chain->buf->last && *(pos + 1) == LF){
+							//æ²¡è·¨buf
+							dst_chain = chain;
+							len += pos - chain->buf->start;
+							break;
+
+						}else if (pos == chain->buf->last &&
+								  chain->next != NULL&&
+								  chain->next->buf != NULL &&
+								  chain->next->buf->last != chain->next->buf->start &&
+								  *(chain->next->buf->start) == LF){
+							//åˆšå¥½è·¨buf
+							dst_chain = chain;
+							len += pos - chain->buf->start;
+							break;
+
+						}else{
+							len += chain->buf->last - chain->buf->start;
+							continue;
+						}
+
+					}else{
+						len += chain->buf->last - chain->buf->start;
+						continue;
+					}
+				}
+
+				if (dst_chain != NULL){
+					r->in_first_line.data = (u_char *)ngx_palloc(r->pool,len);
+					r->in_first_line.len = len;
+					pos = r->in_first_line.data;
+					chain = &r->recv_chain;
+
+					for (;chain != dst_chain;chain = chain->next){
+
+						pos = ngx_copy(pos,chain->buf->start,chain->buf->last - chain->buf->start);
+						len -= chain->buf->last - chain->buf->start;
+					}
+
+					if (len != 0){
+						pos = ngx_copy(pos,chain->buf->start,len);
+					}
+
+				}
+
+			}else{
+
+				r->in_first_line.data = r->recv_chain.buf->start;
+				r->in_first_line.len = pos - r->recv_chain.buf->start;
+
 			}
 		}
 
@@ -337,7 +505,7 @@ namespace http
 		http_request * r = (http_request *)p->data;
 
 		if (r->state != HEADER_FIELD){
-			//¿ÉÄÜÊÇÎ´·ÖÅä¹ý£¬»òÕß´ÓHEADER_VALUE×´Ì¬ÇÐ»»¹ýÀ´
+			//å¯èƒ½æ˜¯æœªåˆ†é…è¿‡ï¼Œæˆ–è€…ä»ŽHEADER_VALUEçŠ¶æ€åˆ‡æ¢è¿‡æ¥
 			r->header_last = (ngx_table_elt_t*)ngx_list_push(r->headers_in);
 			if (r->header_last == NULL){
 				return -1;
@@ -361,7 +529,7 @@ namespace http
 	int http_request::http_body_cb( http_parser*p, const char *at, size_t length )
 	{
 		http_request * r = (http_request *)p->data;
-		//±£´æbody²¿·ÖÔÚbufÖÐµÄÎ»ÖÃ
+		//ä¿å­˜bodyéƒ¨åˆ†åœ¨bufä¸­çš„ä½ç½®
 		ngx_chain_t *last_chain =&r->body;
 		while(last_chain->next != NULL)
 			last_chain = last_chain->next;
@@ -373,19 +541,20 @@ namespace http
 			return 0;
 		}
 
-		//¶Ô±ÈatºÍµ±Ç°bufÖ¸ÏòµÄÄÚ´æ¿éÊÇ·ñÁ¬Ðø
+		//å¯¹æ¯”atå’Œå½“å‰bufæŒ‡å‘çš„å†…å­˜å—æ˜¯å¦è¿žç»­
 		if ((u_char *)at == b->end){
-			//Á¬Ðø
+			//è¿žç»­
 			b->end += length;
 			b->last = b->end;
 		}else{
-			//·ÖÅäÐÂµÄbufÁ´
+			//åˆ†é…æ–°çš„bufé“¾
 			ngx_chain_t * new_chain = ngx_alloc_chain_link(r->pool);
 			new_chain->buf = ngx_calloc_buf(r->pool);
 			new_chain->next = NULL;
 			last_chain->next = new_chain;
 
 			new_chain->buf->start = (u_char *)at;
+			new_chain->buf->pos =  new_chain->buf->start;
 			new_chain->buf->end = (u_char *)at + length;
 			new_chain->buf->last = new_chain->buf->end;
 		}
@@ -397,5 +566,7 @@ namespace http
 	{
 		ngx_free(data);
 	}
+
+
 
 }
