@@ -145,7 +145,7 @@ namespace http
 
 	int http_request::set_out_first_line( const char * line,size_t len )
 	{
-		int ret = ngx_str_alloc_cpy(&out_first_line,line,len);
+		int ret = ngx_str_alloc_cpy(&out_first_line,(u_char*)line,len);
 		if (ret){
 			return -1;
 		}
@@ -174,7 +174,7 @@ namespace http
 			return -1;
 		}
 
-		ret = ngx_str_alloc_cpy(&header->value,value,value_len);
+		ret = ngx_str_alloc_cpy(&header->value,(u_char*)value,value_len);
 		if(ret ){
 			return -1;
 		}
@@ -239,7 +239,7 @@ namespace http
 			b = ngx_calloc_buf(this->pool);
 			last_chain->buf = b;
 
-			b->start =  (char*)body;
+			b->start =  (u_char*)body;
 			b->pos = b->start;
 			b->end = b->start + length;
 			b->last = b->end;
@@ -404,7 +404,7 @@ namespace http
 
 		//拷贝请求第一行
 		if (r->recv_chain.buf != NULL){
-			u_char *pos = ngx_strnstr(r->recv_chain.buf->start,CRLF,
+			u_char *pos = ngx_strnstr(r->recv_chain.buf->start,(char *)CRLF,
 									  r->recv_chain.buf->last - r->recv_chain.buf->start);
 			if (pos == NULL){
 

@@ -21,9 +21,9 @@
 #ifndef __HTTP_REQUEST_H__
 #define __HTTP_REQUEST_H__
 
-#include "openlib/nginx/libngx.h"
-#include "openlib/http_parser/http_parser.h"
 
+#include "http_parser/http_parser.h"
+#include "libngx.h"
 namespace http
 {
 
@@ -32,8 +32,8 @@ namespace http
 	* 
 	* @brief	
 	*	
-	*		高性能版的http打包,解析库
-	*		主要体现在内存的使用上
+	*	高性能版的http打包,解析库
+	*	主要体现在内存的使用上
 	*
 	* detail...
 	*	主要用途有以下几点
@@ -58,10 +58,10 @@ namespace http
 		};
 
 		enum PARSE_STATE{
-			START = 0,				//尚未解析过头部
-			HEADER_FIELD,			//头部解析中
-			HEADER_VALUE,			//头部解析中
-			HEADER_DONE,			//解析头部，主要返回长度
+			START = 0,					//尚未解析过头部
+			HEADER_FIELD,				//头部解析中
+			HEADER_VALUE,				//头部解析中
+			HEADER_DONE,				//解析头部，主要返回长度
 			BODY,						//等待body部分数据
 			DONE,						//数据完整
 			ERROR						//解析出错
